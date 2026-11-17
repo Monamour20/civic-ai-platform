@@ -1,0 +1,52 @@
+services:
+
+  postgres:
+    image: postgres:16-alpine
+
+    environment:
+      POSTGRES_DB: civic_ai
+      POSTGRES_USER: civic
+      POSTGRES_PASSWORD: civic
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - civic_postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+
+    environment:
+      ENVIRONMENT: development
+
+      DATABASE_URL: postgresql+psycopg2://civic:civic@postgres:5432/civic_ai
+
+      JWT_SECRET_KEY: replace-with-a-long-random-production-secret
+
+      OLLAMA_BASE_URL: http://host.docker.internal:11434
+
+    ports:
+      - "8000:8000"
+
+    depends_on:
+      - postgres
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+
+    ports:
+      - "3000:3000"
+
+    depends_on:
+      - backend
+
+volumes:
+  civic_postgres_data:
